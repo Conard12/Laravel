@@ -30,20 +30,6 @@
                     <form action="{{ route('commandes.store') }}" method="POST" id="commandeForm">
                         @csrf
                         
-                        <!-- Sélection du stand -->
-                        <div class="mb-6">
-                            <label for="stand_id" class="block text-sm font-medium text-gray-700 mb-2">Stand *</label>
-                            <select name="stand_id" id="stand_id" required
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="">Sélectionner un stand</option>
-                                @foreach($stands as $stand)
-                                    <option value="{{ $stand->id }}" {{ old('stand_id') == $stand->id ? 'selected' : '' }}>
-                                        {{ $stand->nom_stand }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
                         <!-- Produits dynamiques -->
                         <div class="mb-6">
                             <label class="block text-sm font-medium text-gray-700 mb-2">Produits *</label>
@@ -65,7 +51,7 @@
                         <div class="mb-6 bg-blue-50 p-4 rounded-lg">
                             <h3 class="text-lg font-semibold text-gray-900 mb-2">Résumé de la commande</h3>
                             <div id="resume-commande">
-                                <p class="text-gray-600">Sélectionnez un stand et des produits pour voir le résumé</p>
+                                <p class="text-gray-600">Sélectionnez des produits pour voir le résumé</p>
                             </div>
                         </div>
 
@@ -89,22 +75,18 @@
     </div>
 
     <script>
-let produitsParStand = {};
+const allProduits = @json($produits);
 
-function createProduitRow(produits) {
-    if (!produits || produits.length === 0) {
-        alert("Aucun produit disponible pour ce stand.");
-        return null;
-    }
+function createProduitRow() {
     let row = document.createElement('div');
     row.className = "flex items-center space-x-2 my-2";
 
     let select = document.createElement('select');
     select.name = "produits[]";
     select.required = true;
-    select.className = "border rounded px-2 py-1";
+    select.className = "border rounded px-2 py-1 flex-1";
     select.innerHTML = '<option value="">Sélectionner un produit</option>';
-    produits.forEach(function(produit) {
+    allProduits.forEach(function(produit) {
         select.innerHTML += `<option value="${produit.id}">${produit.nom} - ${produit.prix}€</option>`;
     });
 
@@ -136,14 +118,12 @@ function createProduitRow(produits) {
 function updateResume() {
     let total = 0;
     let resume = '<div class="space-y-2">';
-    let standId = document.getElementById('stand_id').value;
-    let produits = produitsParStand[standId] || [];
     const produitsDivs = document.querySelectorAll('#produits-container > div');
     produitsDivs.forEach(div => {
         const select = div.querySelector('select');
         const quantite = div.querySelector('input[type="number"]');
         if (select && quantite && select.value && quantite.value) {
-            const produit = produits.find(p => p.id == select.value);
+            const produit = allProduits.find(p => p.id == select.value);
             if (produit) {
                 const qte = parseInt(quantite.value);
                 const sousTotal = produit.prix * qte;
@@ -168,29 +148,15 @@ function updateResume() {
 }
 
 document.getElementById('ajouter-produit').addEventListener('click', function() {
-    let standId = document.getElementById('stand_id').value;
     let container = document.getElementById('produits-container');
-    if (!standId) {
-        alert('Sélectionnez d\'abord un stand');
-        return;
-    }
-    if (produitsParStand[standId]) {
-        let row = createProduitRow(produitsParStand[standId]);
-        if (row) { container.appendChild(row); updateResume(); }
-    } else {
-        fetch('/api/stands/' + standId + '/produits')
-            .then(response => response.json())
-            .then(data => {
-                produitsParStand[standId] = data;
-                let row = createProduitRow(data);
-                if (row) { container.appendChild(row); updateResume(); }
-            });
-    }
+    let row = createProduitRow();
+    container.appendChild(row);
+    updateResume();
 });
 
-document.getElementById('stand_id').addEventListener('change', function() {
-    document.getElementById('produits-container').innerHTML = '';
-    document.getElementById('resume-commande').innerHTML = '<p class="text-gray-600">Sélectionnez un stand et des produits pour voir le résumé</p>';
+// Add initial row
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('ajouter-produit').click();
 });
 </script>
-</x-app-layout> 
+</x-app-layout>

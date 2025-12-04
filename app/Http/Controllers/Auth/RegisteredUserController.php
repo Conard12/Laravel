@@ -36,7 +36,7 @@ class RegisteredUserController extends Controller
             'role_inscription' => ['required', 'in:entrepreneur,participant'],
         ]);
 
-        $role = $request->role_inscription === 'participant' ? 'participant' : 'entrepreneur_en_attente';
+        $role = $request->role_inscription === 'participant' ? 'participant' : 'entrepreneur';
 
         $user = User::create([
             'name' => $request->name,

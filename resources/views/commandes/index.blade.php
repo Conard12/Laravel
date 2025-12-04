@@ -18,19 +18,11 @@
                 <div class="p-6 text-gray-900">
                     
                     <!-- Filtres -->
-                    <div class="mb-6 bg-gray-50 p-4 rounded-lg">
-                        <form method="GET" action="{{ route('commandes.index') }}" class="flex flex-wrap gap-4">
-                            <div class="flex-1 min-w-64">
-                                <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Rechercher</label>
-                                <input type="text" name="search" id="search" value="{{ request('search') }}" 
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                       placeholder="Nom du stand...">
-                            </div>
-                            
-                            <div class="min-w-48">
+                    <div class="mb-6">
+                        <form method="GET" action="{{ route('commandes.index') }}" class="flex gap-4">
+                            <div class="flex-1">
                                 <label for="statut" class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
-                                <select name="statut" id="statut" 
-                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <select name="statut" id="statut" class="block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                     <option value="">Tous les statuts</option>
                                     <option value="en_attente" {{ request('statut') == 'en_attente' ? 'selected' : '' }}>En attente</option>
                                     <option value="confirmee" {{ request('statut') == 'confirmee' ? 'selected' : '' }}>Confirmée</option>
@@ -68,114 +60,85 @@
                         </div>
                     @endif
 
-                    <!-- Tableau des commandes -->
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full bg-white border border-gray-300">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 border-b border-gray-200 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
-                                        ID
-                                    </th>
-                                    <th class="px-6 py-3 border-b border-gray-200 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
-                                        Stand
-                                    </th>
-                                    <th class="px-6 py-3 border-b border-gray-200 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
-                                        Client
-                                    </th>
-                                    <th class="px-6 py-3 border-b border-gray-200 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
-                                        Total
-                                    </th>
-                                    <th class="px-6 py-3 border-b border-gray-200 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
-                                        Statut
-                                    </th>
-                                    <th class="px-6 py-3 border-b border-gray-200 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
-                                        Date
-                                    </th>
-                                    <th class="px-6 py-3 border-b border-gray-200 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">
-                                        Actions
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white">
-                                @forelse($commandes as $commande)
-                                    <tr class="hover:bg-gray-50">
-                                        <td class="px-6 py-4 whitespace-no-wrap border-b border-gray-200">
-                                            <div class="text-sm leading-5 text-gray-900">#{{ $commande->id }}</div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-no-wrap border-b border-gray-200">
-                                            <div class="text-sm leading-5 text-gray-900">{{ $commande->stand->nom_stand }}</div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-no-wrap border-b border-gray-200">
-                                            <div class="text-sm leading-5 text-gray-900">{{ $commande->user->name }}</div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-no-wrap border-b border-gray-200">
-                                            <div class="text-sm leading-5 text-gray-900 font-semibold">{{ number_format($commande->total_prix, 2) }} €</div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-no-wrap border-b border-gray-200">
-                                            @php
-                                                $statutColors = [
-                                                    'en_attente' => 'bg-yellow-100 text-yellow-800',
-                                                    'confirmee' => 'bg-blue-100 text-blue-800',
-                                                    'en_preparation' => 'bg-orange-100 text-orange-800',
-                                                    'livree' => 'bg-green-100 text-green-800',
-                                                    'annulee' => 'bg-red-100 text-red-800'
-                                                ];
-                                                $statutLabels = [
-                                                    'en_attente' => 'En attente',
-                                                    'confirmee' => 'Confirmée',
-                                                    'en_preparation' => 'En préparation',
-                                                    'livree' => 'Livrée',
-                                                    'annulee' => 'Annulée'
-                                                ];
-                                            @endphp
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $statutColors[$commande->statut] }}">
-                                                {{ $statutLabels[$commande->statut] }}
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-no-wrap border-b border-gray-200">
-                                            <div class="text-sm leading-5 text-gray-900">{{ $commande->created_at->format('d/m/Y H:i') }}</div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-no-wrap border-b border-gray-200 text-sm font-medium">
-                                            <div class="flex items-center space-x-3">
-                                                <a href="{{ route('commandes.show', $commande) }}" 
-                                                   class="text-blue-600 hover:text-blue-900 font-medium px-2 py-1 rounded hover:bg-blue-50 transition-colors">
-                                                   Voir
-                                                </a>
-                                                <span class="text-gray-300">|</span>
-                                                <a href="{{ route('commandes.edit', $commande) }}" 
-                                                   class="text-indigo-600 hover:text-indigo-900 font-medium px-2 py-1 rounded hover:bg-indigo-50 transition-colors">
-                                                   Modifier
-                                                </a>
-                                                <span class="text-gray-300">|</span>
-                                                <form action="{{ route('commandes.destroy', $commande) }}" method="POST" class="inline">
+                    <!-- Liste des commandes -->
+                    @if($commandes->count() > 0)
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">N° Commande</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    @foreach($commandes as $commande)
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                #{{ $commande->id }}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {{ $commande->user->name ?? 'N/A' }}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {{ $commande->created_at->format('d/m/Y H:i') }}
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                {{ number_format($commande->total_prix ?? 0, 2) }} €
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                @php
+                                                    $statutColors = [
+                                                        'en_attente' => 'bg-yellow-100 text-yellow-800',
+                                                        'confirmee' => 'bg-blue-100 text-blue-800',
+                                                        'en_preparation' => 'bg-purple-100 text-purple-800',
+                                                        'livree' => 'bg-green-100 text-green-800',
+                                                        'annulee' => 'bg-red-100 text-red-800',
+                                                    ];
+                                                    $statutLabels = [
+                                                        'en_attente' => 'En attente',
+                                                        'confirmee' => 'Confirmée',
+                                                        'en_preparation' => 'En préparation',
+                                                        'livree' => 'Livrée',
+                                                        'annulee' => 'Annulée',
+                                                    ];
+                                                @endphp
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $statutColors[$commande->statut] ?? 'bg-gray-100 text-gray-800' }}">
+                                                    {{ $statutLabels[$commande->statut] ?? $commande->statut }}
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                <a href="{{ route('commandes.show', $commande) }}" class="text-blue-600 hover:text-blue-900 mr-3">Voir</a>
+                                                <a href="{{ route('commandes.edit', $commande) }}" class="text-indigo-600 hover:text-indigo-900 mr-3">Modifier</a>
+                                                <form action="{{ route('commandes.destroy', $commande) }}" method="POST" class="inline-block">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" 
-                                                            class="text-red-600 hover:text-red-900 font-medium px-2 py-1 rounded hover:bg-red-50 transition-colors" 
-                                                            onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette commande ?')">
-                                                        Supprimer
-                                                    </button>
+                                                    <button type="submit" class="text-red-600 hover:text-red-900" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette commande ?')">Supprimer</button>
                                                 </form>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="7" class="px-6 py-4 whitespace-no-wrap border-b border-gray-200 text-center">
-                                            <div class="text-sm leading-5 text-gray-500">Aucune commande trouvée</div>
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
 
-                    <!-- Pagination -->
-                    <div class="mt-6">
-                        {{ $commandes->links() }}
-                    </div>
+                        <div class="mt-4">
+                            {{ $commandes->links() }}
+                        </div>
+                    @else
+                        <div class="text-center py-8">
+                            <p class="text-gray-500">Aucune commande trouvée.</p>
+                            <a href="{{ route('commandes.create') }}" class="mt-4 inline-block bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                                Créer votre première commande
+                            </a>
+                        </div>
+                    @endif
+
                 </div>
             </div>
         </div>
     </div>
-</x-app-layout> 
+</x-app-layout>

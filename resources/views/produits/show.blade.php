@@ -39,31 +39,6 @@
                         <!-- Informations du produit -->
                         <div class="space-y-6">
                             <div>
-                                <h3 class="text-2xl font-bold text-gray-900 mb-2">{{ $produit->nom }}</h3>
-                                <div class="text-3xl font-bold text-green-600 mb-4">
-                                    {{ number_format($produit->prix, 2) }} €
-                                </div>
-                            </div>
-
-                            @if($produit->description)
-                                <div>
-                                    <h4 class="text-lg font-semibold text-gray-700 mb-2">Description</h4>
-                                    <p class="text-gray-600 leading-relaxed">{{ $produit->description }}</p>
-                                </div>
-                            @endif
-
-                            <div>
-                                <h4 class="text-lg font-semibold text-gray-700 mb-2">Stand</h4>
-                                <span class="inline-flex px-3 py-1 text-sm font-semibold bg-blue-100 text-blue-800 rounded-full">
-                                    {{ $produit->stand->nom_stand }}
-                                </span>
-                            </div>
-
-                            <div>
-                                <h4 class="text-lg font-semibold text-gray-700 mb-2">Informations</h4>
-                                <div class="grid grid-cols-2 gap-4 text-sm">
-                                    <div>
-                                        <span class="font-medium text-gray-600">ID:</span>
                                         <span class="text-gray-900">{{ $produit->id }}</span>
                                     </div>
                                     <div>

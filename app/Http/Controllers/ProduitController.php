@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Produit;
-use App\Models\Stand;
+use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -19,14 +19,7 @@ class ProduitController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Produit::with('stand');
-
-        // Si l'utilisateur est entrepreneur approuvé, il ne voit que les produits de ses stands
-        if (auth()->user()->role === 'entrepreneur' && auth()->user()->statut === 'approuve') {
-            $query->whereHas('stand', function($q) {
-                $q->where('user_id', auth()->id());
-            });
-        }
+        $query = Produit::with('category');
 
         // Recherche par nom
         if ($request->filled('search')) {
@@ -37,15 +30,9 @@ class ProduitController extends Controller
             });
         }
 
-        // Filtre par stand
-        if ($request->filled('stand_id')) {
-            $query->where('stand_id', $request->stand_id);
-        }
-
         $produits = $query->orderBy('created_at', 'desc')->paginate(10);
-        $stands = Stand::all();
 
-        return view('produits.index', compact('produits', 'stands'));
+        return view('produits.index', compact('produits'));
     }
 
     /**
@@ -54,8 +41,8 @@ class ProduitController extends Controller
     public function create()
     {
         $this->authorize('create', Produit::class);
-        $stands = Stand::all();
-        return view('produits.create', compact('stands'));
+        $categories = Category::all();
+        return view('produits.create', compact('categories'));
     }
 
     /**
@@ -68,10 +55,11 @@ class ProduitController extends Controller
             'description' => 'nullable|string',
             'prix' => 'required|numeric|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'stand_id' => 'required|exists:stands,id'
+            'category_id' => 'nullable|exists:categories,id'
         ]);
 
         $data = $request->all();
+        $data['user_id'] = Auth::id();
         
         if ($request->hasFile('image')) {
             $image = $request->file('image');
@@ -101,8 +89,8 @@ class ProduitController extends Controller
     public function edit(Produit $produit)
     {
         $this->authorize('update', $produit);
-        $stands = Stand::all();
-        return view('produits.edit', compact('produit', 'stands'));
+        $categories = Category::all();
+        return view('produits.edit', compact('produit', 'categories'));
     }
 
     /**
@@ -116,7 +104,7 @@ class ProduitController extends Controller
             'description' => 'nullable|string',
             'prix' => 'required|numeric|min:0',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'stand_id' => 'required|exists:stands,id'
+            'category_id' => 'nullable|exists:categories,id'
         ]);
 
         $data = $request->all();

@@ -13,7 +13,7 @@ class CommandePolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->role === 'admin' || ($user->role === 'entrepreneur' && $user->statut === 'approuve');
+        return $user->role === 'admin';
     }
 
     /**
@@ -21,7 +21,7 @@ class CommandePolicy
      */
     public function view(User $user, Commande $commande): bool
     {
-        return $user->role === 'admin' || ($user->role === 'entrepreneur' && $user->statut === 'approuve' && $commande->stand->user_id === $user->id);
+        return $user->role === 'admin' || $user->id === $commande->user_id;
     }
 
     /**
@@ -29,7 +29,7 @@ class CommandePolicy
      */
     public function create(User $user): bool
     {
-        return $user->role === 'admin' || ($user->role === 'entrepreneur' && $user->statut === 'approuve');
+        return true;
     }
 
     /**
@@ -37,7 +37,7 @@ class CommandePolicy
      */
     public function update(User $user, Commande $commande): bool
     {
-        return $user->role === 'admin' || ($user->role === 'entrepreneur' && $user->statut === 'approuve' && $commande->stand->user_id === $user->id);
+        return $user->role === 'admin';
     }
 
     /**
@@ -45,7 +45,7 @@ class CommandePolicy
      */
     public function delete(User $user, Commande $commande): bool
     {
-        return $user->role === 'admin' || ($user->role === 'entrepreneur' && $user->statut === 'approuve' && $commande->stand->user_id === $user->id);
+        return $user->role === 'admin';
     }
 
     /**

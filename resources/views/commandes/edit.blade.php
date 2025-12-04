@@ -38,20 +38,6 @@
                         @csrf
                         @method('PUT')
                         
-                        <!-- Sélection du stand -->
-                        <div class="mb-6">
-                            <label for="stand_id" class="block text-sm font-medium text-gray-700 mb-2">Stand *</label>
-                            <select name="stand_id" id="stand_id" required
-                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                <option value="">Sélectionner un stand</option>
-                                @foreach($stands as $stand)
-                                    <option value="{{ $stand->id }}" {{ (old('stand_id', $commande->stand_id) == $stand->id) ? 'selected' : '' }}>
-                                        {{ $stand->nom_stand }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
                         <!-- Statut -->
                         <div class="mb-6">
                             <label for="statut" class="block text-sm font-medium text-gray-700 mb-2">Statut *</label>
@@ -121,36 +107,21 @@
             const produitsContainer = document.getElementById('produits-container');
             const ajouterProduitBtn = document.getElementById('ajouter-produit');
             const resumeCommande = document.getElementById('resume-commande');
-            const standSelect = document.getElementById('stand_id');
-            const produits = @json($produits);
-            const produitsParStand = @json($produitsParStand);
+            const allProduits = @json($produits);
             const commandeProduits = @json($commande->details_commande['produits'] ?? []);
             let produitIndex = 0;
 
-            // Fonction pour obtenir les produits du stand sélectionné
-            function getProduitsDuStand(standId) {
-                if (!standId) return [];
-                return produitsParStand[standId] || [];
-            }
-
             // Fonction pour créer les options de produits
-            function creerOptionsProduits(produitsDuStand, selectedId = '') {
-                if (produitsDuStand.length === 0) {
-                    return '<option value="">Aucun produit disponible pour ce stand</option>';
-                }
-                
-                return produitsDuStand.map(produit => `
+            function creerOptionsProduits(selectedId = '') {
+                return allProduits.map(produit => `
                     <option value="${produit.id}" data-prix="${produit.prix}" ${selectedId == produit.id ? 'selected' : ''}>
-                        ${produit.nom_produit} - ${produit.prix}€
+                        ${produit.nom} - ${produit.prix}€
                     </option>
                 `).join('');
             }
 
             // Ajouter un produit
             function ajouterProduit(produitId = '', quantite = 1) {
-                const standId = standSelect.value;
-                const produitsDuStand = getProduitsDuStand(standId);
-                
                 const produitDiv = document.createElement('div');
                 produitDiv.className = 'flex items-center space-x-4 mb-4 p-3 bg-white rounded border';
                 produitDiv.innerHTML = `
@@ -158,7 +129,7 @@
                         <select name="details_commande[produits][produit_${produitIndex}]" required
                                 class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                             <option value="">Sélectionner un produit</option>
-                            ${creerOptionsProduits(produitsDuStand, produitId)}
+                            ${creerOptionsProduits(produitId)}
                         </select>
                     </div>
                     <div class="w-24">
@@ -187,25 +158,6 @@
                 ajouterProduit();
             });
 
-            // Event listener pour le changement de stand
-            standSelect.addEventListener('change', function() {
-                const standId = this.value;
-                const produitsDuStand = getProduitsDuStand(standId);
-                
-                // Mettre à jour tous les selects de produits existants
-                const selects = produitsContainer.querySelectorAll('select');
-                selects.forEach(select => {
-                    const currentValue = select.value;
-                    select.innerHTML = `
-                        <option value="">Sélectionner un produit</option>
-                        ${creerOptionsProduits(produitsDuStand)}
-                    `;
-                    select.value = currentValue; // Restaurer la valeur si possible
-                });
-                
-                updateResume();
-            });
-
             // Mettre à jour le résumé
             function updateResume() {
                 let total = 0;
@@ -217,14 +169,14 @@
                     const quantite = div.querySelector('input[type="number"]');
                     
                     if (select.value && quantite.value) {
-                        const produit = produits.find(p => p.id == select.value);
+                        const produit = allProduits.find(p => p.id == select.value);
                         const qte = parseInt(quantite.value);
                         const sousTotal = produit.prix * qte;
                         total += sousTotal;
                         
                         resume += `
                             <div class="flex justify-between text-sm">
-                                <span>${produit.nom_produit} x${qte}</span>
+                                <span>${produit.nom} x${qte}</span>
                                 <span>${sousTotal.toFixed(2)}€</span>
                             </div>
                         `;
@@ -243,9 +195,16 @@
             }
 
             // Charger les produits existants
-            Object.entries(commandeProduits).forEach(([produitId, quantite]) => {
-                ajouterProduit(produitId, quantite);
-            });
+            // Note: details_commande structure might be array or object depending on how it was saved.
+            // The controller saves it as ['produits' => [id => qty]]
+            // So we iterate over that.
+            if (Array.isArray(commandeProduits)) {
+                 // Handle legacy array format if any
+            } else {
+                Object.entries(commandeProduits).forEach(([produitId, quantite]) => {
+                    ajouterProduit(produitId, quantite);
+                });
+            }
 
             // Si aucun produit, ajouter un produit vide
             if (Object.keys(commandeProduits).length === 0) {
@@ -256,4 +215,4 @@
             setTimeout(updateResume, 100);
         });
     </script>
-</x-app-layout> 
+</x-app-layout>

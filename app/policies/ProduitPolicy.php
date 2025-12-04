@@ -13,7 +13,7 @@ class ProduitPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->role === 'admin' || ($user->role === 'entrepreneur' && $user->statut === 'approuve');
+        return $user->role === 'admin';
     }
 
     /**
@@ -21,7 +21,7 @@ class ProduitPolicy
      */
     public function view(User $user, Produit $produit): bool
     {
-        return $user->role === 'admin' || ($user->role === 'entrepreneur' && $user->statut === 'approuve' && $produit->stand->user_id === $user->id);
+        return $user->role === 'admin';
     }
 
     /**
@@ -37,7 +37,7 @@ class ProduitPolicy
      */
     public function update(User $user, Produit $produit): bool
     {
-        return $user->role === 'admin' || ($user->role === 'entrepreneur' && $user->statut === 'approuve' && $produit->stand->user_id === $user->id);
+        return $user->role === 'admin' || $user->id === $produit->user_id;
     }
 
     /**
@@ -45,7 +45,7 @@ class ProduitPolicy
      */
     public function delete(User $user, Produit $produit): bool
     {
-        return $user->role === 'admin' || ($user->role === 'entrepreneur' && $user->statut === 'approuve' && $produit->stand->user_id === $user->id);
+        return $user->role === 'admin' || $user->id === $produit->user_id;
     }
 
     /**

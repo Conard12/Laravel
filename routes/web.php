@@ -3,19 +3,31 @@
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminController;
-use App\Http\Controllers\StandController;
 use App\Http\Controllers\ProduitController;
 use App\Http\Controllers\CommandeController;
 use App\Http\Controllers\AdminCommandeController;
+use App\Http\Controllers\CategoryController;
 use Illuminate\Http\Request;
 
 Route::get('/', function () {
     return view('welcome');
 });
 
+// Pages statiques
+Route::get('/about', [App\Http\Controllers\PageController::class, 'about'])->name('pages.about');
+Route::get('/contact', [App\Http\Controllers\PageController::class, 'contact'])->name('pages.contact');
+Route::get('/terms', [App\Http\Controllers\PageController::class, 'terms'])->name('pages.terms');
+Route::get('/legal', [App\Http\Controllers\PageController::class, 'legal'])->name('pages.legal');
+
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
+
+// Catalogue public des produits (pour les participants)
+Route::get('/shop', [App\Http\Controllers\PublicController::class, 'catalog'])
+    ->middleware('auth')
+    ->name('shop.catalog');
+
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -42,24 +54,17 @@ Route::get('/test-auth', function () {
 
 // Application du middleware d'authentification uniquement
 Route::middleware(['auth'])->group(function () {
-    Route::resource('stands', StandController::class);
     Route::resource('produits', ProduitController::class);
+    Route::resource('categories', CategoryController::class);
     Route::resource('commandes', CommandeController::class);
     // Ajoute ici d'autres routes privées si besoin
 });
 
-// Application du middleware pour bloquer les entrepreneurs en attente
-Route::middleware(['auth', 'entrepreneur.approuve'])->group(function () {
-    // Ajoute ici d'autres routes privées si besoin
-});
+// Page exhibitor - Liste de tous les produits (accessible à tous les utilisateurs authentifiés)
+Route::get('/exhibitor', [ProduitController::class, 'exhibitor'])->middleware('auth')->name('exhibitor');
 
 // Route pour mettre à jour le statut d'une commande
 Route::patch('/commandes/{commande}/statut', [CommandeController::class, 'updateStatut'])->name('commandes.update-statut');
-
-// Route AJAX pour récupérer les produits d'un stand
-Route::get('/api/stands/{stand}/produits', function ($standId, Request $request) {
-    return \App\Models\Produit::where('stand_id', $standId)->get();
-});
 
 // Routes d'administration protégées par le middleware 'isadmin'
 Route::get('/admin', [App\Http\Controllers\AdminController::class, 'index'])
@@ -112,11 +117,11 @@ Route::get('/admin/commandes/export', function (\Illuminate\Http\Request $reques
 
 // Routes publiques (accessibles à tous)
 Route::prefix('public')->group(function () {
-    // Liste des stands approuvés
-    Route::get('/stands', [App\Http\Controllers\PublicController::class, 'index'])->name('public.stands.index');
+    // Liste des produits
+    Route::get('/produits', [App\Http\Controllers\PublicController::class, 'index'])->name('public.produits.index');
     
-    // Détails d'un stand
-    Route::get('/stands/{id}', [App\Http\Controllers\PublicController::class, 'show'])->name('public.stands.show');
+    // Détails d'un produit
+    Route::get('/produits/{id}', [App\Http\Controllers\PublicController::class, 'show'])->name('public.produits.show');
     
     // Recherche de produits
     Route::get('/produits/search', [App\Http\Controllers\PublicController::class, 'searchProduits'])->name('public.produits.search');
@@ -142,6 +147,11 @@ Route::prefix('orders')->group(function () {
     Route::get('/history', [App\Http\Controllers\PublicOrderController::class, 'history'])->name('orders.history');
     Route::get('/{id}', [App\Http\Controllers\PublicOrderController::class, 'show'])->name('orders.show');
 });
+
+// Routes de paiement
+Route::get('/payment/checkout/{commande}', [App\Http\Controllers\PaymentController::class, 'checkout'])->name('payment.checkout');
+Route::get('/payment/success', [App\Http\Controllers\PaymentController::class, 'success'])->name('payment.success');
+Route::get('/payment/cancel', [App\Http\Controllers\PaymentController::class, 'cancel'])->name('payment.cancel');
 
 // Page d'information pour les entrepreneurs en attente
 Route::get('/statut-demande', function () {

@@ -117,7 +117,6 @@
                                 <thead>
                                     <tr>
                                         <th class="px-4 py-2">ID</th>
-                                        <th class="px-4 py-2">Stand</th>
                                         <th class="px-4 py-2">Client</th>
                                         <th class="px-4 py-2">Date</th>
                                         <th class="px-4 py-2">Montant</th>
@@ -127,31 +126,19 @@
                                     @forelse($dernieresCommandes as $commande)
                                         <tr class="border-t">
                                             <td class="px-4 py-2">{{ $commande->id }}</td>
-                                            <td class="px-4 py-2">{{ optional($commande->stand)->nom_stand ?? '-' }}</td>
                                             <td class="px-4 py-2">{{ $commande->nom_client ?? ($commande->user->name ?? '-') }}</td>
                                             <td class="px-4 py-2">{{ $commande->created_at ? $commande->created_at->format('d/m/Y H:i') : '-' }}</td>
                                             <td class="px-4 py-2">{{ $commande->total_prix ?? $commande->calculerTotal() }} €</td>
                                         </tr>
                                     @empty
-                                        <tr><td colspan="5" class="px-4 py-2 text-center text-gray-500">Aucune commande récente</td></tr>
+                                        <tr><td colspan="4" class="px-4 py-2 text-center text-gray-500">Aucune commande récente</td></tr>
                                     @endforelse
                                 </tbody>
                             </table>
                         </div>
                     </div>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <!-- Gestion des Stands -->
-                        <div class="bg-blue-50 p-6 rounded-lg border border-blue-200">
-                            <h3 class="text-lg font-semibold text-blue-800 mb-3">Gestion des Stands</h3>
-                            <p class="text-blue-600 mb-4">Administration complète des stands</p>
-                            <a href="{{ route('stands.index') }}" 
-                               class="inline-flex items-center px-4 py-2 bg-blue-500 hover:bg-blue-700 text-white font-bold rounded transition-colors duration-200"
-                               style="background-color: #3b82f6 !important;">
-                                Gérer les Stands
-                            </a>
-                        </div>
-
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- Gestion des Produits -->
                         <div class="bg-orange-50 p-6 rounded-lg border border-orange-200">
                             <h3 class="text-lg font-semibold text-orange-800 mb-3">Gestion des Produits</h3>
@@ -179,4 +166,4 @@
             </div>
         </div>
     </div>
-</x-app-layout> 
+</x-app-layout>

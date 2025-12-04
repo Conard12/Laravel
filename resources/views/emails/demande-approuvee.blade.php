@@ -76,21 +76,6 @@
 
         <div class="content">
             <p>Bonjour <strong>{{ $user->name }}</strong>,</p>
-
-            <p>Nous avons le plaisir de vous informer que votre demande d'inscription en tant qu'entrepreneur pour l'événement <strong>Eat&Drink</strong> a été <strong>approuvée</strong> !</p>
-
-            <div class="highlight">
-                <p><strong>🎉 Félicitations !</strong> Vous pouvez maintenant :</p>
-                <ul>
-                    <li>Accéder à votre tableau de bord personnel</li>
-                    <li>Gérer vos stands et vos produits</li>
-                    <li>Recevoir des commandes de visiteurs</li>
-                    <li>Participer pleinement à l'événement</li>
-                </ul>
-            </div>
-
-            <p>Pour commencer à utiliser la plateforme, veuillez vous connecter à votre compte :</p>
-
             <div style="text-align: center;">
                 <a href="{{ $loginUrl }}" class="button">Se connecter à mon compte</a>
             </div>

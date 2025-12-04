@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Commande;
-use App\Models\Stand;
 use App\Models\Produit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -26,26 +25,11 @@ class CommandeController extends Controller
             abort(401, 'Vous devez être connecté.');
         }
 
-        $query = Commande::with(['stand', 'user']);
+        $query = Commande::with(['user']);
 
         // Filtrage par statut
         if ($request->filled('statut')) {
             $query->where('statut', $request->statut);
-        }
-
-        // Filtrage par stand (pour les entrepreneurs approuvés)
-        if (auth()->user()->role === 'entrepreneur' && auth()->user()->statut === 'approuve') {
-            $query->whereHas('stand', function ($q) {
-                $q->where('user_id', auth()->id());
-            });
-        }
-
-        // Recherche par nom de stand
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->whereHas('stand', function ($q) use ($search) {
-                $q->where('nom_stand', 'like', "%{$search}%");
-            });
         }
 
         $commandes = $query->orderBy('created_at', 'desc')->paginate(10);
@@ -59,13 +43,9 @@ class CommandeController extends Controller
     public function create()
     {
         $this->authorize('create', Commande::class);
-        $stands = Stand::all();
-        $produits = Produit::with('stand')->get();
+        $produits = Produit::all();
         
-        // Grouper les produits par stand pour le JavaScript
-        $produitsParStand = $produits->groupBy('stand_id');
-        
-        return view('commandes.create', compact('stands', 'produits', 'produitsParStand'));
+        return view('commandes.create', compact('produits'));
     }
 
     /**
@@ -74,7 +54,6 @@ class CommandeController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'stand_id' => 'required|exists:stands,id',
             'produits' => 'required|array|min:1',
             'quantites' => 'required|array|min:1',
             // autres validations si besoin
@@ -84,7 +63,6 @@ class CommandeController extends Controller
             DB::beginTransaction();
 
             $commande = new Commande();
-            $commande->stand_id = $request->stand_id;
             $commande->user_id = auth()->id();
             $commande->statut = 'en_attente';
             $commande->notes = $request->notes;
@@ -103,7 +81,18 @@ class CommandeController extends Controller
                     $total += $produit->prix * $quantite;
                 }
             }
-            $commande->details_commande = $details;
+            $commande->details_commande = ['produits' => $request->produits]; // Simplified for now, should match expected structure
+             // Re-structuring details to match what seems to be expected (array of items or map)
+             // The original code had $details[] = ... but then used $commande->details_commande['produits'] in show()
+             // Let's look at show(): foreach ($this->details_commande['produits'] as $produitId => $quantite)
+             // So it expects a map of productId => quantity.
+            
+            $produitsMap = [];
+            foreach ($request->produits as $i => $produit_id) {
+                $produitsMap[$produit_id] = $request->quantites[$i];
+            }
+            $commande->details_commande = ['produits' => $produitsMap];
+            
             $commande->total_prix = $total;
             $commande->save();
 
@@ -112,7 +101,7 @@ class CommandeController extends Controller
             return redirect()->route('commandes.index')->with('success', 'Commande créée avec succès !');
         } catch (\Exception $e) {
             DB::rollback();
-            return back()->with('error', 'Erreur lors de la création de la commande.');
+            return back()->with('error', 'Erreur lors de la création de la commande: ' . $e->getMessage());
         }
     }
 
@@ -130,11 +119,11 @@ class CommandeController extends Controller
         // Récupérer les produits avec leurs quantités
         $produits = collect();
         $total = 0;
-        if (is_array($details)) {
-            foreach ($details as $item) {
-                $produit = \App\Models\Produit::find($item['produit_id']);
+        
+        if (is_array($details) && isset($details['produits'])) {
+             foreach ($details['produits'] as $produitId => $quantite) {
+                $produit = \App\Models\Produit::find($produitId);
                 if ($produit) {
-                    $quantite = $item['quantite'];
                     $sousTotal = $produit->prix * $quantite;
                     $produit->quantite_commande = $quantite;
                     $produit->sous_total = $sousTotal;
@@ -153,14 +142,10 @@ class CommandeController extends Controller
     public function edit(Commande $commande)
     {
         $this->authorize('update', $commande);
-        $stands = Stand::all();
-        $produits = Produit::with('stand')->get();
-        $commande->load(['stand', 'user']);
+        $produits = Produit::all();
+        $commande->load(['user']);
         
-        // Grouper les produits par stand pour le JavaScript
-        $produitsParStand = $produits->groupBy('stand_id');
-
-        return view('commandes.edit', compact('commande', 'stands', 'produits', 'produitsParStand'));
+        return view('commandes.edit', compact('commande', 'produits'));
     }
 
     /**
@@ -170,7 +155,6 @@ class CommandeController extends Controller
     {
         $this->authorize('update', $commande);
         $request->validate([
-            'stand_id' => 'required|exists:stands,id',
             'details_commande' => 'required|array',
             'details_commande.produits' => 'required|array',
             'statut' => 'required|in:en_attente,confirmee,en_preparation,livree,annulee',
@@ -180,7 +164,6 @@ class CommandeController extends Controller
         try {
             DB::beginTransaction();
 
-            $commande->stand_id = $request->stand_id;
             $commande->details_commande = $request->details_commande;
             $commande->statut = $request->statut;
             $commande->notes = $request->notes;

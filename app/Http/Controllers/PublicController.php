@@ -2,73 +2,90 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Stand;
 use App\Models\Produit;
+use App\Models\Category;
 use Illuminate\Http\Request;
 
 class PublicController extends Controller
 {
     /**
-     * Affiche la liste des stands approuvés (page publique)
+     * Affiche le catalogue public des produits (HTML)
      */
-    public function index(Request $request)
+    public function catalog(Request $request)
     {
-        $query = Stand::with(['user', 'produits'])
-            ->whereHas('user', function($q) {
-                $q->where('role', 'entrepreneur')
-                  ->where('statut', 'approuve');
-            });
+        $query = Produit::with('category', 'user');
 
-        // Recherche par nom de stand ou nom d'entreprise
+        // Recherche par nom
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
-                $q->where('nom_stand', 'like', "%{$search}%")
-                  ->orWhereHas('user', function($userQuery) use ($search) {
-                      $userQuery->where('name', 'like', "%{$search}%");
-                  });
+                $q->where('nom', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
             });
         }
 
-        // Filtre par catégorie (si implémenté plus tard)
-        if ($request->filled('categorie')) {
-            $query->where('categorie', $request->categorie);
+        // Filtre par catégorie
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
         }
 
-        $stands = $query->orderBy('created_at', 'desc')
+        $produits = $query->orderBy('created_at', 'desc')
+            ->paginate(12)
+            ->withQueryString();
+
+        $categories = Category::all();
+
+        return view('public.catalog', compact('produits', 'categories'));
+    }
+
+    /**
+     * Affiche la liste des produits (page publique)
+     */
+    public function index(Request $request)
+    {
+        $query = Produit::query();
+
+        // Recherche par nom
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('nom', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
+        // Filtre par catégorie
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        $produits = $query->orderBy('created_at', 'desc')
             ->paginate(12)
             ->withQueryString();
 
         return response()->json([
             'success' => true,
-            'data' => $stands,
-            'message' => 'Stands récupérés avec succès'
+            'data' => $produits,
+            'message' => 'Produits récupérés avec succès'
         ]);
     }
 
     /**
-     * Affiche les détails d'un stand avec ses produits
+     * Affiche les détails d'un produit
      */
     public function show($id)
     {
-        $stand = Stand::with(['user', 'produits' => function($query) {
-            $query->orderBy('created_at', 'desc');
-        }])
-        ->whereHas('user', function($q) {
-            $q->where('role', 'entrepreneur')
-              ->where('statut', 'approuve');
-        })
-        ->findOrFail($id);
+        $produit = Produit::with('category')->findOrFail($id);
 
         return response()->json([
             'success' => true,
-            'data' => $stand,
-            'message' => 'Stand récupéré avec succès'
+            'data' => $produit,
+            'message' => 'Produit récupéré avec succès'
         ]);
     }
 
     /**
-     * Recherche de produits dans tous les stands approuvés
+     * Recherche de produits
      */
     public function searchProduits(Request $request)
     {
@@ -76,12 +93,7 @@ class PublicController extends Controller
             'search' => 'required|string|min:2|max:100',
         ]);
 
-        $produits = Produit::with(['stand.user'])
-            ->whereHas('stand.user', function($q) {
-                $q->where('role', 'entrepreneur')
-                  ->where('statut', 'approuve');
-            })
-            ->where(function($q) use ($request) {
+        $produits = Produit::where(function($q) use ($request) {
                 $q->where('nom', 'like', "%{$request->search}%")
                   ->orWhere('description', 'like', "%{$request->search}%");
             })
@@ -101,14 +113,7 @@ class PublicController extends Controller
     public function stats()
     {
         $stats = [
-            'total_stands' => Stand::whereHas('user', function($q) {
-                $q->where('role', 'entrepreneur')->where('statut', 'approuve');
-            })->count(),
-            'total_produits' => Produit::whereHas('stand.user', function($q) {
-                $q->where('role', 'entrepreneur')->where('statut', 'approuve');
-            })->count(),
-            'total_entrepreneurs' => \App\Models\User::where('role', 'entrepreneur')
-                ->where('statut', 'approuve')->count(),
+            'total_produits' => Produit::count(),
         ];
 
         return response()->json([

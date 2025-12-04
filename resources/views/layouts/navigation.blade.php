@@ -16,11 +16,11 @@
                         {{ __('Dashboard') }}
                     </x-nav-link>
                     
+                    <x-nav-link :href="route('shop.catalog')" :active="request()->routeIs('shop.*')">
+                        {{ __('Shop') }}
+                    </x-nav-link>
+                    
                     @if(auth()->user()->role === 'admin' || auth()->user()->role === 'entrepreneur_approuve')
-                        <x-nav-link :href="route('stands.index')" :active="request()->routeIs('stands.*')">
-                            {{ __('Stands') }}
-                        </x-nav-link>
-                        
                         <x-nav-link :href="route('produits.index')" :active="request()->routeIs('produits.*')">
                             {{ __('Produits') }}
                         </x-nav-link>
@@ -67,11 +67,11 @@
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
             
+            <x-responsive-nav-link :href="route('shop.catalog')" :active="request()->routeIs('shop.*')">
+                {{ __('Shop') }}
+            </x-responsive-nav-link>
+            
             @if(auth()->user()->role === 'admin' || auth()->user()->role === 'entrepreneur_approuve')
-                <x-responsive-nav-link :href="route('stands.index')" :active="request()->routeIs('stands.*')">
-                    {{ __('Stands') }}
-                </x-responsive-nav-link>
-                
                 <x-responsive-nav-link :href="route('produits.index')" :active="request()->routeIs('produits.*')">
                     {{ __('Produits') }}
                 </x-responsive-nav-link>

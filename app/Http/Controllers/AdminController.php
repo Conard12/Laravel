@@ -11,14 +11,13 @@ class AdminController extends Controller
     {
         // Statistiques principales
         $totalUsers = \App\Models\User::count();
-        $totalEntrepreneursAttente = \App\Models\User::where('role', 'entrepreneur_en_attente')->count();
-        $totalEntrepreneursApprouves = \App\Models\User::where('role', 'entrepreneur_approuve')->count();
-        $totalStands = \App\Models\Stand::count();
+        $totalEntrepreneursAttente = \App\Models\User::where('role', 'entrepreneur')->where('statut', 'en_attente')->count();
+        $totalEntrepreneursApprouves = \App\Models\User::where('role', 'entrepreneur')->where('statut', 'approuve')->count();
         $totalProduits = \App\Models\Produit::count();
         $totalCommandes = \App\Models\Commande::count();
 
         // 5 dernières demandes d'entrepreneurs en attente
-        $dernieresDemandes = \App\Models\User::where('role', 'entrepreneur_en_attente')->orderBy('created_at', 'desc')->take(5)->get();
+        $dernieresDemandes = \App\Models\User::where('role', 'entrepreneur')->where('statut', 'en_attente')->orderBy('created_at', 'desc')->take(5)->get();
 
         // 5 dernières commandes
         $dernieresCommandes = \App\Models\Commande::orderBy('created_at', 'desc')->take(5)->get();
@@ -37,8 +36,8 @@ class AdminController extends Controller
         // Répartition des rôles utilisateurs (camembert)
         $roles = [
             'Admin' => \App\Models\User::where('role', 'admin')->count(),
-            'Entrepreneurs approuvés' => \App\Models\User::where('role', 'entrepreneur_approuve')->count(),
-            'Entrepreneurs en attente' => \App\Models\User::where('role', 'entrepreneur_en_attente')->count(),
+            'Entrepreneurs approuvés' => \App\Models\User::where('role', 'entrepreneur')->where('statut', 'approuve')->count(),
+            'Entrepreneurs en attente' => \App\Models\User::where('role', 'entrepreneur')->where('statut', 'en_attente')->count(),
             'Participants' => \App\Models\User::where('role', 'participant')->count(),
         ];
 
@@ -46,7 +45,6 @@ class AdminController extends Controller
             'totalUsers',
             'totalEntrepreneursAttente',
             'totalEntrepreneursApprouves',
-            'totalStands',
             'totalProduits',
             'totalCommandes',
             'dernieresDemandes',

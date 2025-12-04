@@ -20,12 +20,7 @@ class PublicOrderController extends Controller
         $total = 0;
 
         foreach ($cart as $produitId => $quantity) {
-            $produit = Produit::with('stand.user')
-                ->whereHas('stand.user', function($q) {
-                    $q->where('role', 'entrepreneur')
-                      ->where('statut', 'approuve');
-                })
-                ->find($produitId);
+            $produit = Produit::find($produitId);
 
             if ($produit) {
                 $cartItems[] = [
@@ -80,65 +75,35 @@ class PublicOrderController extends Controller
         try {
             DB::beginTransaction();
 
-            // Grouper les produits par stand
-            $commandesParStand = [];
+            $details = [];
+            $totalCommande = 0;
+
             foreach ($cart as $produitId => $quantity) {
-                $produit = Produit::with('stand')
-                    ->whereHas('stand.user', function($q) {
-                        $q->where('role', 'entrepreneur')
-                          ->where('statut', 'approuve');
-                    })
-                    ->find($produitId);
+                $produit = Produit::find($produitId);
 
                 if ($produit) {
-                    $standId = $produit->stand_id;
-                    if (!isset($commandesParStand[$standId])) {
-                        $commandesParStand[$standId] = [
-                            'stand' => $produit->stand,
-                            'produits' => []
-                        ];
-                    }
-                    $commandesParStand[$standId]['produits'][] = [
-                        'produit' => $produit,
-                        'quantite' => $quantity,
-                        'prix_unitaire' => $produit->prix
-                    ];
-                }
-            }
-
-            $commandesCreees = [];
-
-            // Créer une commande par stand
-            foreach ($commandesParStand as $standId => $data) {
-                $details = [];
-                $totalStand = 0;
-
-                foreach ($data['produits'] as $item) {
                     $details[] = [
-                        'produit_id' => $item['produit']->id,
-                        'nom_produit' => $item['produit']->nom,
-                        'quantite' => $item['quantite'],
-                        'prix_unitaire' => $item['prix_unitaire'],
-                        'sous_total' => $item['prix_unitaire'] * $item['quantite']
+                        'produit_id' => $produit->id,
+                        'nom_produit' => $produit->nom,
+                        'quantite' => $quantity,
+                        'prix_unitaire' => $produit->prix,
+                        'sous_total' => $produit->prix * $quantity
                     ];
-                    $totalStand += $item['prix_unitaire'] * $item['quantite'];
+                    $totalCommande += $produit->prix * $quantity;
                 }
-
-                $commande = Commande::create([
-                    'stand_id' => $standId,
-                    'user_id' => null, // Commande publique, pas d'utilisateur connecté
-                    'nom_client' => $request->nom_client,
-                    'email_client' => $request->email_client,
-                    'telephone_client' => $request->telephone_client,
-                    'adresse_livraison' => $request->adresse_livraison,
-                    'details_commande' => $details,
-                    'total_prix' => $totalStand,
-                    'statut' => 'en_attente',
-                    'notes' => $request->notes,
-                ]);
-
-                $commandesCreees[] = $commande;
             }
+
+            $commande = Commande::create([
+                'user_id' => null, // Commande publique, pas d'utilisateur connecté
+                'nom_client' => $request->nom_client,
+                'email_client' => $request->email_client,
+                'telephone_client' => $request->telephone_client,
+                'adresse_livraison' => $request->adresse_livraison,
+                'details_commande' => $details,
+                'total_prix' => $totalCommande,
+                'statut' => 'en_attente',
+                'notes' => $request->notes,
+            ]);
 
             // Vider le panier
             Session::forget('cart');
@@ -148,10 +113,10 @@ class PublicOrderController extends Controller
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'commandes' => $commandesCreees,
-                    'total_commandes' => count($commandesCreees)
+                    'commandes' => [$commande],
+                    'total_commandes' => 1
                 ],
-                'message' => 'Commande(s) créée(s) avec succès ! Vous recevrez un email de confirmation.'
+                'message' => 'Commande créée avec succès ! Vous recevrez un email de confirmation.'
             ]);
 
         } catch (\Exception $e) {
@@ -173,8 +138,7 @@ class PublicOrderController extends Controller
             'email' => 'required|email',
         ]);
 
-        $commandes = Commande::with(['stand.user', 'stand'])
-            ->where('email_client', $request->email)
+        $commandes = Commande::where('email_client', $request->email)
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
@@ -206,8 +170,7 @@ class PublicOrderController extends Controller
      */
     public function show($id)
     {
-        $commande = Commande::with(['stand.user', 'stand'])
-            ->findOrFail($id);
+        $commande = Commande::findOrFail($id);
 
         // Décoder les détails de la commande
         $details = is_string($commande->details_commande) 

@@ -15,6 +15,21 @@
     </div>
 
     <div>
+        <x-input-label for="category_id" :value="__('Catégorie')" />
+        <select id="category_id" name="category_id" 
+                class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm">
+            <option value="">Sélectionner une catégorie</option>
+            @foreach($categories as $category)
+                <option value="{{ $category->id }}" 
+                        {{ old('category_id', $produit->category_id ?? '') == $category->id ? 'selected' : '' }}>
+                    {{ $category->nom }}
+                </option>
+            @endforeach
+        </select>
+        <x-input-error class="mt-2" :messages="$errors->get('category_id')" />
+    </div>
+
+    <div>
         <x-input-label for="prix" :value="__('Prix (€)')" />
         <x-text-input id="prix" name="prix" type="number" step="0.01" min="0" class="mt-1 block w-full" 
                       :value="old('prix', $produit->prix ?? '')" required />
@@ -28,32 +43,12 @@
         <x-input-error class="mt-2" :messages="$errors->get('image')" />
         @if(isset($produit) && $produit->image)
             <div class="mt-2">
-                <img src="{{ asset('images/produits/' . $produit->image) }}" alt="Image actuelle" class="w-32 h-32 object-cover rounded">
-                <p class="text-sm text-gray-500 mt-1">Image actuelle</p>
+                <img src="{{ asset('images/produits/' . $produit->image) }}" alt="{{ $produit->nom }}" class="w-32 h-32 object-cover rounded-lg">
             </div>
         @endif
     </div>
 
-    <div>
-        <x-input-label for="stand_id" :value="__('Stand')" />
-        <select id="stand_id" name="stand_id" 
-                class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" required>
-            <option value="">Sélectionner un stand</option>
-            @foreach($stands as $stand)
-                <option value="{{ $stand->id }}" 
-                        {{ old('stand_id', $produit->stand_id ?? '') == $stand->id ? 'selected' : '' }}>
-                    {{ $stand->nom_stand }}
-                </option>
-            @endforeach
-        </select>
-        <x-input-error class="mt-2" :messages="$errors->get('stand_id')" />
-    </div>
-
     <div class="flex items-center gap-4">
         <x-primary-button>{{ __('Enregistrer') }}</x-primary-button>
-        <a href="{{ route('produits.index') }}" 
-           class="inline-flex items-center px-4 py-2 bg-gray-300 border border-transparent rounded-md font-semibold text-xs text-gray-700 uppercase tracking-widest hover:bg-gray-400 focus:bg-gray-400 active:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150">
-            Annuler
-        </a>
     </div>
-</div> 
+</div>

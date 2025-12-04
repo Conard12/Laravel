@@ -50,13 +50,7 @@ class User extends Authenticatable
         ];
     }
 
-    /**
-     * Relation avec les stands
-     */
-    public function stands(): HasMany
-    {
-        return $this->hasMany(Stand::class);
-    }
+
 
     /**
      * Relation avec les commandes
@@ -74,12 +68,12 @@ class User extends Authenticatable
 
     public function isEntrepreneur()
     {
-        return $this->role === 'entrepreneur_approuve';
+        return $this->role === 'entrepreneur' && $this->statut === 'approuve';
     }
 
     public function isEnAttente()
     {
-        return $this->role === 'entrepreneur_en_attente';
+        return $this->role === 'entrepreneur' && $this->statut === 'en_attente';
     }
 
     public function isParticipant()

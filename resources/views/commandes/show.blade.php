@@ -36,26 +36,6 @@
             @endif
 
             <!-- Informations générales -->
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
-                <div class="p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Informations de la commande</h3>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <div class="mb-4">
-                                <label class="block text-sm font-medium text-gray-700">Stand</label>
-                                <p class="mt-1 text-sm text-gray-900">{{ $commande->stand->nom_stand }}</p>
-                            </div>
-                            
-                            <div class="mb-4">
-                                <label class="block text-sm font-medium text-gray-700">Client</label>
-                                <p class="mt-1 text-sm text-gray-900">{{ $commande->user->name }}</p>
-                            </div>
-                            
-                            <div class="mb-4">
-                                <label class="block text-sm font-medium text-gray-700">Date de commande</label>
-                                <p class="mt-1 text-sm text-gray-900">{{ $commande->created_at->format('d/m/Y H:i') }}</p>
-                            </div>
                         </div>
                         
                         <div>

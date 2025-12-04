@@ -12,15 +12,22 @@ class Produit extends Model
         'description',
         'prix',
         'image',
-        'stand_id'
+        'category_id',
+        'user_id'
     ];
 
     protected $casts = [
         'prix' => 'decimal:2'
     ];
 
-    public function stand(): BelongsTo
+
+    public function category(): BelongsTo
     {
-        return $this->belongsTo(Stand::class);
+        return $this->belongsTo(Category::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 }

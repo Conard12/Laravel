@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Commande extends Model
 {
     protected $fillable = [
-        'stand_id',
         'user_id',
         'details_commande',
         'statut',
@@ -19,7 +18,10 @@ class Commande extends Model
         'nom_client',
         'email_client',
         'telephone_client',
-        'adresse_livraison'
+        'telephone_client',
+        'adresse_livraison',
+        'stripe_session_id',
+        'payment_status'
     ];
 
     protected $casts = [
@@ -28,13 +30,7 @@ class Commande extends Model
         'total_prix' => 'decimal:2'
     ];
 
-    /**
-     * Relation avec le stand
-     */
-    public function stand(): BelongsTo
-    {
-        return $this->belongsTo(Stand::class);
-    }
+
 
     /**
      * Relation avec l'utilisateur
