@@ -11,19 +11,14 @@ class CartController extends Controller
     /**
      * Affiche le contenu du panier
      */
-    public function index()
+    public function index(Request $request)
     {
         $cart = Session::get('cart', []);
         $cartItems = [];
         $total = 0;
 
         foreach ($cart as $produitId => $quantity) {
-            $produit = Produit::with('stand.user')
-                ->whereHas('stand.user', function($q) {
-                    $q->where('role', 'entrepreneur')
-                      ->where('statut', 'approuve');
-                })
-                ->find($produitId);
+            $produit = Produit::find($produitId);
 
             if ($produit) {
                 $cartItems[] = [
@@ -35,14 +30,23 @@ class CartController extends Controller
             }
         }
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'items' => $cartItems,
-                'total' => $total,
-                'count' => count($cartItems)
-            ],
-            'message' => 'Panier récupéré avec succès'
+        // Si la requête attend du JSON (requête AJAX), retourner du JSON
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'items' => $cartItems,
+                    'total' => $total,
+                    'count' => count($cartItems)
+                ],
+                'message' => 'Panier récupéré avec succès'
+            ]);
+        }
+
+        // Sinon, afficher la vue HTML du panier
+        return view('cart.index', [
+            'cartItems' => $cartItems,
+            'total' => $total
         ]);
     }
 
@@ -56,12 +60,7 @@ class CartController extends Controller
             'quantite' => 'required|integer|min:1|max:100',
         ]);
 
-        $produit = Produit::with('stand.user')
-            ->whereHas('stand.user', function($q) {
-                $q->where('role', 'entrepreneur')
-                  ->where('statut', 'approuve');
-            })
-            ->findOrFail($request->produit_id);
+        $produit = Produit::findOrFail($request->produit_id);
 
         $cart = Session::get('cart', []);
         $produitId = $request->produit_id;
@@ -74,14 +73,20 @@ class CartController extends Controller
 
         Session::put('cart', $cart);
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'produit' => $produit,
-                'quantite' => $cart[$produitId],
-                'message' => 'Produit ajouté au panier'
-            ]
-        ]);
+        // Si la requête attend du JSON (requête AJAX), retourner du JSON
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'produit' => $produit,
+                    'quantite' => $cart[$produitId],
+                    'message' => 'Produit ajouté au panier'
+                ]
+            ]);
+        }
+
+        // Sinon, rediriger vers la page précédente avec un message flash
+        return redirect()->back()->with('success', '✓ Produit ajouté au panier avec succès !');
     }
 
     /**
